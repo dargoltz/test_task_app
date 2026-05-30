@@ -9,7 +9,7 @@ from src.models.base import Base
 from src.models.enums import TaskPriority, TaskStatus
 
 
-class TaskModel(Base):
+class TaskORM(Base):
     __tablename__ = "tasks"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
