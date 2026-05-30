@@ -18,6 +18,12 @@ class TaskService:
         return TaskORM(**request.model_dump())
 
     async def create_task(self, task: TaskRequest) -> TaskResponse:
+        """
+        Создает и запускает задачу. Возвращает инфо о созданной задаче
+
+        Args:
+            task: тело запроса
+        """
         task_orm = self._request_to_orm(task)
         created = await self.repository.create(task_orm)
 
@@ -26,6 +32,13 @@ class TaskService:
         return self._orm_to_response(created)
 
     async def get_task_list(self, page: int, limit: int) -> PaginatedResponse[TaskResponse]:
+        """
+        Возвращает пагинированный список задач
+
+        Args:
+            page: номер страницы
+            limit: количество задач на странице
+        """
         task_list = await self.repository.get_list(page, limit)
         task_total = await self.repository.get_total()
 
@@ -49,6 +62,12 @@ class TaskService:
         return task.status
 
     async def cancel_task(self, task_id: uuid.UUID) -> None:
+        """
+        Отменяет задачу и останавливает ее выполнение (если запущена)
+
+        Args:
+            task_id: id задачи
+        """
         await self.repository.update_status_by_id(task_id, TaskStatus.CANCELLED)
 
         # todo cancel task execution if running
