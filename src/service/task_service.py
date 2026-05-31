@@ -1,6 +1,6 @@
 import uuid
 
-from src.core import DBSession
+from src.core import DBSession, EntityNotFoundError
 from src.dto import TaskResponse, TaskRequest, PaginatedResponse
 from src.models import TaskStatus, TaskORM
 from src.repository.task_repository import TaskRepository
@@ -13,7 +13,7 @@ class TaskService:
 
     @staticmethod
     def _orm_to_response(task: TaskORM | None) -> TaskResponse:
-        return TaskResponse.model_validate(task) if task else None
+        return TaskResponse.model_validate(task)
 
     async def create_task(self, task: TaskRequest) -> TaskResponse:
         """
@@ -55,15 +55,21 @@ class TaskService:
             total=task_total
         )
 
-    async def get_task(self, task_id: uuid.UUID) -> TaskResponse | None:
+    async def get_task(self, task_id: uuid.UUID) -> TaskResponse:
         task = await self.repository.get_by_id(task_id)
+
+        if not task:
+            raise EntityNotFoundError(TaskORM, task_id)
 
         return self._orm_to_response(task)
 
-    async def get_task_status(self, task_id: uuid.UUID) -> TaskStatus | None:
+    async def get_task_status(self, task_id: uuid.UUID) -> TaskStatus:
         task = await self.repository.get_by_id(task_id)
 
-        return task.status if task else None
+        if not task:
+            raise EntityNotFoundError(TaskORM, task_id)
+
+        return task.status
 
     async def cancel_task(self, task_id: uuid.UUID) -> None:
         """
@@ -72,7 +78,10 @@ class TaskService:
         Args:
             task_id: id задачи
         """
-        await self.repository.update_status_by_id(task_id, TaskStatus.CANCELLED)
+        updated_id = await self.repository.update_status_by_id(task_id, TaskStatus.CANCELLED)
+
+        if not updated_id:
+            raise EntityNotFoundError(TaskORM, task_id)
 
         # todo cancel task execution if running
 
