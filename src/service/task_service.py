@@ -15,10 +15,6 @@ class TaskService:
     def _orm_to_response(task: TaskORM | None) -> TaskResponse:
         return TaskResponse.model_validate(task) if task else None
 
-    @staticmethod
-    def _request_to_orm(request: TaskRequest) -> TaskORM:
-        return TaskORM(**request.model_dump())
-
     async def create_task(self, task: TaskRequest) -> TaskResponse:
         """
         Создает и запускает задачу. Возвращает инфо о созданной задаче
@@ -26,7 +22,12 @@ class TaskService:
         Args:
             task: тело запроса
         """
-        task_orm = self._request_to_orm(task)
+        task_orm = TaskORM(
+            name=task.name,
+            description=task.description,
+            priority=task.priority,
+            status=TaskStatus.NEW
+        )
         created = await self.repository.create(task_orm)
 
         # todo run task
