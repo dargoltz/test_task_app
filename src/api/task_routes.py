@@ -20,7 +20,7 @@ async def create_task(
 @task_router.get("/", response_model=PaginatedResponse[TaskResponse])
 async def get_tasks(
     page: int = Query(default=1, ge=1),
-    limit: int = Query(default=10, le=10),
+    limit: int = Query(default=10, ge=10),
     service: TaskService = Depends(TaskService),
 ):
     return await service.get_task_list(page=page, limit=limit)
