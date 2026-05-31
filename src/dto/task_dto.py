@@ -1,9 +1,25 @@
-from pydantic import BaseModel
+import datetime
+import uuid
+
+from pydantic import BaseModel, Field
+
+from src.models import TaskPriority, TaskStatus
 
 
 class TaskRequest(BaseModel):
-    pass
+    name: str = Field(title="Имя")
+    description: str = Field(title="Описание")
+    priority: TaskPriority = Field(title="Приоритет")
 
 
 class TaskResponse(BaseModel):
-    pass
+    id: uuid.UUID
+    name: str = Field(title="Имя")
+    description: str = Field(title="Описание")
+    priority: TaskPriority = Field(title="Приоритет")
+    status: TaskStatus = Field(title="Статус")
+    created_at: datetime.datetime = Field(title="Создана")
+    started_at: datetime.datetime | None = Field(title="Начата")
+    finished_at: datetime.datetime | None = Field(title="Завершена")
+    result: str | None = Field(title="Результат выполнения")
+    error: str | None = Field(title="Ошибка выполнения")
