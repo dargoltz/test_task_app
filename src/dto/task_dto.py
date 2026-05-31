@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from src.models import TaskPriority, TaskStatus
 
@@ -23,3 +23,5 @@ class TaskResponse(BaseModel):
     finished_at: datetime.datetime | None = Field(title="Завершена")
     result: str | None = Field(title="Результат выполнения")
     error: str | None = Field(title="Ошибка выполнения")
+
+    model_config = ConfigDict(from_attributes=True)
