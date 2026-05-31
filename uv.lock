@@ -711,6 +711,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "aio-pika" },
     { name = "fastapi" },
+    { name = "greenlet" },
     { name = "psycopg" },
     { name = "pydantic-settings" },
     { name = "sqlalchemy" },
@@ -727,6 +728,7 @@ dev = [
 requires-dist = [
     { name = "aio-pika", specifier = ">=9.6.2" },
     { name = "fastapi", specifier = ">=0.136.3" },
+    { name = "greenlet", specifier = ">=3.5.1" },
     { name = "psycopg", specifier = ">=3.3.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "sqlalchemy", specifier = ">=2.0.50" },
