@@ -7,8 +7,8 @@ from src.models import TaskPriority, TaskStatus
 
 
 class TaskRequest(BaseModel):
-    name: str = Field(title="Имя")
-    description: str = Field(title="Описание")
+    name: str = Field(title="Имя", min_length=5)
+    description: str = Field(title="Описание", min_length=5)
     priority: TaskPriority = Field(title="Приоритет")
 
 
