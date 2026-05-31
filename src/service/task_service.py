@@ -29,6 +29,7 @@ class TaskService:
             status=TaskStatus.NEW
         )
         created = await self.repository.create(task_orm)
+        await self.session.commit()
 
         # todo run task
 
@@ -74,3 +75,5 @@ class TaskService:
         await self.repository.update_status_by_id(task_id, TaskStatus.CANCELLED)
 
         # todo cancel task execution if running
+
+        await self.session.commit()
