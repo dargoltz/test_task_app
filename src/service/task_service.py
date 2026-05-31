@@ -1,17 +1,19 @@
 import uuid
 
+from src.core import DBSession
 from src.dto import TaskResponse, TaskRequest, PaginatedResponse
 from src.models import TaskStatus, TaskORM
 from src.repository.task_repository import TaskRepository
 
 
 class TaskService:
-    def __init__(self, repository: TaskRepository):
-        self.repository = repository
+    def __init__(self, session: DBSession):
+        self.session = session
+        self.repository = TaskRepository(session)
 
     @staticmethod
-    def _orm_to_response(task: TaskORM) -> TaskResponse:
-        return TaskResponse.model_validate(task)
+    def _orm_to_response(task: TaskORM | None) -> TaskResponse:
+        return TaskResponse.model_validate(task) if task else None
 
     @staticmethod
     def _request_to_orm(request: TaskRequest) -> TaskORM:
@@ -51,15 +53,15 @@ class TaskService:
             total=task_total
         )
 
-    async def get_task(self, task_id: uuid.UUID) -> TaskResponse:
+    async def get_task(self, task_id: uuid.UUID) -> TaskResponse | None:
         task = await self.repository.get_by_id(task_id)
 
         return self._orm_to_response(task)
 
-    async def get_task_status(self, task_id: uuid.UUID) -> TaskStatus:
+    async def get_task_status(self, task_id: uuid.UUID) -> TaskStatus | None:
         task = await self.repository.get_by_id(task_id)
 
-        return task.status
+        return task.status if task else None
 
     async def cancel_task(self, task_id: uuid.UUID) -> None:
         """
