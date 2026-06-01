@@ -48,13 +48,9 @@ class TaskRepository:
         self,
         task_id: uuid.UUID,
         status: TaskStatus,
-    ) -> uuid.UUID | None:
-        stmt = (
+    ) -> None:
+        await self.session.execute(
             update(TaskORM)
             .where(TaskORM.id == task_id)
             .values(status=status)
-            .returning(TaskORM.id)
         )
-
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()

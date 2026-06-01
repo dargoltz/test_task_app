@@ -67,16 +67,21 @@ class TaskService:
 
     async def cancel_task(self, task_id: uuid.UUID) -> None:
         """
-        Отменяет задачу и останавливает ее выполнение (если запущена)
+        Отменяет задачу до начала ее выполнения.
+
+        В остальных случаях отмена не происходит по двум причинам:
+
+        - задача уже завершена (выполнена, отменена)
+        - задача уже запущена (в процессе выполнения)
 
         Args:
             task_id: id задачи
         """
-        updated_id = await self.repository.update_status_by_id(task_id, TaskStatus.CANCELLED)
+        found = await self.repository.get_by_id(task_id)
 
-        if not updated_id:
-            raise EntityNotFoundError(TaskORM, task_id)
-
-        # todo cancel task execution if running
+        if found.status in (TaskStatus.NEW, TaskStatus.PENDING):
+            await self.repository.update_status_by_id(task_id, TaskStatus.CANCELLED)
+        else:
+            raise TaskCancelError(found.id, found.status)
 
         await self.session.commit()
