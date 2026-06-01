@@ -2,6 +2,7 @@ import uuid
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core import EntityNotFoundError
 from src.models import TaskORM, TaskStatus
 
 
@@ -31,11 +32,17 @@ class TaskRepository:
         )
         return result.scalar_one()
 
-    async def get_by_id(self, task_id: uuid.UUID) -> TaskORM | None:
+    async def get_by_id(self, task_id: uuid.UUID) -> TaskORM:
         result = await self.session.execute(
             select(TaskORM).where(TaskORM.id == task_id)
         )
-        return result.scalar_one_or_none()
+
+        found = result.scalar_one_or_none()
+
+        if not found:
+            raise EntityNotFoundError(TaskORM, task_id)
+
+        return found
 
     async def update_status_by_id(
         self,

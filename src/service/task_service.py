@@ -58,16 +58,10 @@ class TaskService:
     async def get_task(self, task_id: uuid.UUID) -> TaskResponse:
         task = await self.repository.get_by_id(task_id)
 
-        if not task:
-            raise EntityNotFoundError(TaskORM, task_id)
-
         return self._orm_to_response(task)
 
     async def get_task_status(self, task_id: uuid.UUID) -> TaskStatus:
         task = await self.repository.get_by_id(task_id)
-
-        if not task:
-            raise EntityNotFoundError(TaskORM, task_id)
 
         return task.status
 
