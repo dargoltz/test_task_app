@@ -1,9 +1,10 @@
+import json
 import uuid
 
-from src.core import DBSession, EntityNotFoundError
+from src.core import DBSession, TaskExecutionError, TaskCancelError, rabbitmq_client
 from src.dto import TaskResponse, TaskRequest, PaginatedResponse
 from src.models import TaskStatus, TaskORM
-from src.repository.task_repository import TaskRepository
+from src.repository import TaskRepository
 
 
 class TaskService:
@@ -31,7 +32,7 @@ class TaskService:
         created = await self.repository.create(task_orm)
         await self.session.commit()
 
-        # todo run task
+        await self._send_task_to_queue(created)
 
         return self._orm_to_response(created)
 
@@ -85,3 +86,15 @@ class TaskService:
             raise TaskCancelError(found.id, found.status)
 
         await self.session.commit()
+
+    async def _send_task_to_queue(self, task: TaskORM):
+        try:
+            await rabbitmq_client.send_message({"task_id": str(task.id)}, task.priority)
+
+            await self.repository.update_status_by_id(task.id, TaskStatus.PENDING)
+        except Exception as exc:
+            await self.repository.update_status_by_id(task.id, TaskStatus.FAILED)
+
+            raise TaskExecutionError(task.id) from exc
+        finally:
+            await self.session.commit()
