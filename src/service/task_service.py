@@ -90,8 +90,6 @@ class TaskService:
 
     async def _send_task_to_queue(self, task: TaskORM):
         try:
-            await rabbitmq_client.send_message({"task_id": str(task.id)}, task.priority)
-
             await self.repository.update_status_by_id(task.id, TaskStatus.PENDING)
             await self.session.commit()
 
@@ -100,5 +98,3 @@ class TaskService:
             await self.repository.update_status_by_id(task.id, TaskStatus.FAILED)
 
             raise TaskExecutionError(task.id) from exc
-        finally:
-            await self.session.commit()
