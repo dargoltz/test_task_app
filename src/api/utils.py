@@ -9,4 +9,4 @@ def get_producer(request: Request):
     return request.app.state.rabbitmq_producer
 
 
-RabbitMQProducer = Annotated[RabbitMQProducer, Depends(get_producer)]
+RabbitMQProducerDep = Annotated[RabbitMQProducer, Depends(get_producer)]

@@ -15,6 +15,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d app_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -23,6 +30,35 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  migration:
+    build: .
+    command: alembic upgrade head
+    env_file:
+      - .env.docker-compose
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build: .
+    command: uvicorn src.api.app:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.docker-compose
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+
+  worker:
+    build: .
+    command: python -m src.worker.main
+    env_file:
+      - .env.docker-compose
+    depends_on:
+      migration:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:
