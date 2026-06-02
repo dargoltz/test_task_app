@@ -1,16 +1,17 @@
-import json
 import uuid
 
-from src.core import DBSession, TaskExecutionError, TaskCancelError, rabbitmq_client
+from src.api.utils import RabbitMQProducer
+from src.core import DBSession, TaskExecutionError, TaskCancelError
 from src.dto import TaskResponse, TaskRequest, PaginatedResponse
 from src.models import TaskStatus, TaskORM
 from src.repository import TaskRepository
 
 
 class TaskService:
-    def __init__(self, session: DBSession):
+    def __init__(self, session: DBSession, rabbitmq_producer: RabbitMQProducer):
         self.session = session
         self.repository = TaskRepository(session)
+        self.rabbitmq_producer = rabbitmq_producer
 
     @staticmethod
     def _orm_to_response(task: TaskORM | None) -> TaskResponse:
@@ -92,6 +93,9 @@ class TaskService:
             await rabbitmq_client.send_message({"task_id": str(task.id)}, task.priority)
 
             await self.repository.update_status_by_id(task.id, TaskStatus.PENDING)
+            await self.session.commit()
+
+            await self.rabbitmq_producer.send_message({"task_id": str(task.id)}, task.priority)
         except Exception as exc:
             await self.repository.update_status_by_id(task.id, TaskStatus.FAILED)
 
