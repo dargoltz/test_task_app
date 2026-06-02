@@ -10,7 +10,7 @@ class EntityNotFoundError(Exception):
 
 class TaskExecutionError(Exception):
     def __init__(self, task_id: uuid.UUID):
-        super().__init__(f"Task {task_id} execution failed.")
+        super().__init__(f"Task {task_id} execution failed")
 
 
 class TaskCancelError(Exception):
