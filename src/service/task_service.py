@@ -1,6 +1,6 @@
 import uuid
 
-from src.api.utils import RabbitMQProducer
+from src.api.utils import RabbitMQProducerDep
 from src.core import DBSession, TaskExecutionError, TaskCancelError
 from src.dto import TaskResponse, TaskRequest, PaginatedResponse
 from src.models import TaskStatus, TaskORM
@@ -8,7 +8,7 @@ from src.repository import TaskRepository
 
 
 class TaskService:
-    def __init__(self, session: DBSession, rabbitmq_producer: RabbitMQProducer):
+    def __init__(self, session: DBSession, rabbitmq_producer: RabbitMQProducerDep):
         self.session = session
         self.repository = TaskRepository(session)
         self.rabbitmq_producer = rabbitmq_producer
