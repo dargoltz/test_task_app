@@ -2,7 +2,7 @@ import uuid
 
 from src.api.utils import RabbitMQProducerDep
 from src.core import DBSession, TaskExecutionError, TaskCancelError
-from src.dto import TaskResponse, TaskRequest, PaginatedResponse
+from src.dto import TaskResponse, TaskRequest, PaginatedResponse, TaskFilterParameters
 from src.models import TaskStatus, TaskORM
 from src.repository import TaskRepository
 
@@ -37,22 +37,21 @@ class TaskService:
 
         return self._orm_to_response(created)
 
-    async def get_task_list(self, page: int, limit: int) -> PaginatedResponse[TaskResponse]:
+    async def get_task_list(self, filter_params: TaskFilterParameters) -> PaginatedResponse[TaskResponse]:
         """
         Возвращает пагинированный список задач
 
         Args:
-            page: номер страницы
-            limit: количество задач на странице
+            filter_params: параметры фильтрации
         """
-        task_list = await self.repository.get_list(page, limit)
+        task_list = await self.repository.get_list(filter_params)
         task_total = await self.repository.get_total()
 
         task_responses = [self._orm_to_response(task) for task in task_list]
 
         return PaginatedResponse(
-            page=page,
-            limit=limit,
+            page=filter_params.page,
+            limit=filter_params.limit,
             items=task_responses,
             total=task_total
         )

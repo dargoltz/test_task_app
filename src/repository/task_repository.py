@@ -3,6 +3,7 @@ from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core import EntityNotFoundError
+from src.dto import TaskFilterParameters
 from src.models import TaskORM, TaskStatus
 
 
@@ -15,15 +16,21 @@ class TaskRepository:
         await self.session.flush()
         return task
 
-    async def get_list(self, page: int, limit: int) -> list[TaskORM]:
-        offset = (page - 1) * limit
-
-        result = await self.session.execute(
+    async def get_list(self, filter_params: TaskFilterParameters) -> list[TaskORM]:
+        stmt = (
             select(TaskORM)
-            .offset(offset)
-            .limit(limit)
+            .offset(filter_params.offset)
+            .limit(filter_params.limit)
             .order_by(TaskORM.created_at.desc())
         )
+
+        if filter_params.status:
+            stmt = stmt.where(TaskORM.status == filter_params.status)
+
+        if filter_params.priority:
+            stmt = stmt.where(TaskORM.priority == filter_params.priority)
+
+        result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
     async def get_total(self) -> int:
