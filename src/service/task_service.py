@@ -45,7 +45,7 @@ class TaskService:
             filter_params: параметры фильтрации
         """
         task_list = await self.repository.get_list(filter_params)
-        task_total = await self.repository.get_total()
+        task_total = await self.repository.get_total(filter_params)
 
         task_responses = [self._orm_to_response(task) for task in task_list]
 
