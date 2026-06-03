@@ -72,7 +72,9 @@
 docker compose up --build
 
 API - `http://localhost:8000`
+
 Swagger - `http://localhost:8000/docs`
+
 RabbitMQ Management - `http://localhost:15672`
 
 ## Запуск без Docker и Тестирование
@@ -80,6 +82,12 @@ RabbitMQ Management - `http://localhost:15672`
 `uv sync` - создать venv
 
 Далее отдельно поднять PostgreSQL и RabbitMQ любым удобным способом (можно отдельными сервисами из docker-compose.yml)
+
+Конфигурации должны соответствовать .env файлу
+
+`uv run alembic upgrade head` - применить миграции к БД
+
+`uv run uvicorm src.api.app:app --reload` - запустить API вне Docker
 
 `pytest` - запустить тесты
 
