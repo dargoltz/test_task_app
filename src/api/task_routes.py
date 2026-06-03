@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, status, Depends, Query
 
-from src.dto import TaskRequest, PaginatedResponse, TaskResponse
+from src.dto import TaskRequest, PaginatedResponse, TaskResponse, TaskFilterParameters
 from src.models import TaskStatus
 from src.service import TaskService
 
@@ -19,11 +19,10 @@ async def create_task(
 
 @task_router.get("/", response_model=PaginatedResponse[TaskResponse])
 async def get_tasks(
-    page: int = Query(default=1, ge=1),
-    limit: int = Query(default=10, ge=10),
+    filter_params: TaskFilterParameters = Depends(),
     service: TaskService = Depends(TaskService),
 ):
-    return await service.get_task_list(page=page, limit=limit)
+    return await service.get_task_list(filter_params)
 
 
 @task_router.get("/{task_id:uuid}", response_model=TaskResponse)
