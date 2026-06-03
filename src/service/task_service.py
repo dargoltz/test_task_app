@@ -95,5 +95,6 @@ class TaskService:
             await self.rabbitmq_producer.send_message({"task_id": str(task.id)}, task.priority)
         except Exception as exc:
             await self.repository.update_status_by_id(task.id, TaskStatus.FAILED)
+            await self.session.commit()
 
             raise TaskExecutionError(task.id) from exc
