@@ -16,6 +16,16 @@ class TaskRepository:
         await self.session.flush()
         return task
 
+    @staticmethod
+    def update_stmt_by_filter_params(stmt, filter_params: TaskFilterParameters):
+        if filter_params.status:
+            stmt = stmt.where(TaskORM.status == filter_params.status)
+
+        if filter_params.priority:
+            stmt = stmt.where(TaskORM.priority == filter_params.priority)
+
+        return stmt
+
     async def get_list(self, filter_params: TaskFilterParameters) -> list[TaskORM]:
         stmt = (
             select(TaskORM)
@@ -24,19 +34,19 @@ class TaskRepository:
             .order_by(TaskORM.created_at.desc())
         )
 
-        if filter_params.status:
-            stmt = stmt.where(TaskORM.status == filter_params.status)
+        filtered_stmt = self.update_stmt_by_filter_params(stmt, filter_params)
 
-        if filter_params.priority:
-            stmt = stmt.where(TaskORM.priority == filter_params.priority)
-
-        result = await self.session.execute(stmt)
+        result = await self.session.execute(filtered_stmt)
         return list(result.scalars().all())
 
-    async def get_total(self) -> int:
-        result = await self.session.execute(
+    async def get_total(self, filter_params: TaskFilterParameters) -> int:
+        stmt = (
             select(func.count(TaskORM.id))
         )
+
+        filtered_stmt = self.update_stmt_by_filter_params(stmt, filter_params)
+
+        result = await self.session.execute(filtered_stmt)
         return result.scalar_one()
 
     async def get_by_id(self, task_id: uuid.UUID) -> TaskORM:
