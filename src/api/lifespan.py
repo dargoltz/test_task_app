@@ -6,8 +6,8 @@ from src.core.rabbitmq import RabbitMQProducer
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    rabbitmq_producer = RabbitMQProducer()
-    await rabbitmq_producer.startup()
-    app.state.rabbitmq_producer = rabbitmq_producer
+    rabbitmq = RabbitMQProducer()
+    await rabbitmq.startup()
+    app.state.rabbitmq = rabbitmq
     yield
-    await rabbitmq_producer.close()
+    await rabbitmq.close()

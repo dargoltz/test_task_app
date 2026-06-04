@@ -1,3 +1,3 @@
-from .paginated_response import PaginatedResponse
-from .task_dto import TaskRequest, TaskResponse
-from .filter_parameters import PaginationParameters, TaskFilterParameters
+from .page_params import PageParameters
+from .task_filter import TaskFilterParameters
+from .page import Page

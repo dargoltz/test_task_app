@@ -1,31 +1,33 @@
 import json
+from dataclasses import dataclass
 
+import structlog
 import aio_pika
 
 from src.core import app_settings
-from src.models import TaskPriority
+from src.domain.value_objects import TaskPriority
 
-PRIORITY_MAP = {
-    TaskPriority.LOW:    1,
-    TaskPriority.MEDIUM: 5,
-    TaskPriority.HIGH:   9,
-}
+logger = structlog.get_logger()
 
 
+@dataclass(slots=True, eq=False)
 class RabbitMQBase:
     queue_name = app_settings.RABBITMQ_QUEUE
-
-    def __init__(self):
-        self.connection = None
-        self.channel = None
-        self.queue = None
+    connection: aio_pika.abc.AbstractConnection | None = None
+    channel: aio_pika.abc.AbstractChannel | None = None
+    queue: aio_pika.abc.AbstractQueue | None = None
 
     async def startup(self):
         self.connection = await aio_pika.connect_robust(app_settings.RABBITMQ_URL)
-        self.channel = await self.connection.channel()
-        self.queue = await self._declare_queue()
+        logger.info(f"RabbitMQ connection established successfully")
 
-    async def _declare_queue(self) -> aio_pika.Queue:
+        self.channel = await self.connection.channel()
+        logger.info(f"RabbitMQ channel {self.channel} established successfully")
+
+        self.queue = await self._declare_queue()
+        logger.info(f"RabbitMQ queue ({self.queue_name}) declared successfully")
+
+    async def _declare_queue(self) -> aio_pika.abc.AbstractQueue:
         return await self.channel.declare_queue(
             self.queue_name,
             durable=True,
@@ -35,8 +37,17 @@ class RabbitMQBase:
     async def close(self):
         if self.connection:
             await self.connection.close()
+            logger.info(f"RabbitMQ connection closed successfully")
 
 
+@dataclass(slots=True, eq=False)
+class RabbitMQConsumer(RabbitMQBase):
+    async def start_consuming(self, handler):
+        await self.queue.consume(handler)
+        logger.info(f"Worker started. Waiting for messages...")
+
+
+@dataclass(slots=True, eq=False)
 class RabbitMQProducer(RabbitMQBase):
     async def send_message(self, message: dict, priority: TaskPriority):
         msg = aio_pika.Message(
@@ -45,12 +56,16 @@ class RabbitMQProducer(RabbitMQBase):
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
         )
 
+        logger.info(f"Sending message: {message}")
+
         await self.channel.default_exchange.publish(
             msg,
             routing_key=self.queue_name,
         )
 
 
-class RabbitMQConsumer(RabbitMQBase):
-    async def start_consuming(self, handler):
-        await self.queue.consume(handler)
+PRIORITY_MAP = {
+    TaskPriority.LOW:    1,
+    TaskPriority.MEDIUM: 5,
+    TaskPriority.HIGH:   9,
+}
