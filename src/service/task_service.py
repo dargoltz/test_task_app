@@ -37,9 +37,6 @@ class TaskService:
     async def run_task(self, task_id: uuid.UUID) -> None:
         task = await self.repository.get_by_id(task_id)
 
-        if task is None:
-            return
-
         TaskStatusManager.set_pending(task)
         await self.repository.update_status(task)
 
