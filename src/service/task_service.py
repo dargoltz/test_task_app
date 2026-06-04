@@ -35,23 +35,15 @@ class TaskService:
 
         created = await self.repository.create(domain_task)
 
+        logger.info(f"Task {created.id} created. Start task execution...")
+
+        TaskStatusManager.set_pending(created)
+        await self.repository.update_status(created)
+
+        await self._send_task_to_queue(created)
+
         return self._domain_to_schema(created)
 
-    async def run_task(self, task_id: uuid.UUID) -> None:
-        """
-        Запускает задачу.
-
-        Args:
-            task_id: id задачи
-        """
-        logger.info(f"Running task {task_id}")
-
-        task = await self.repository.get_by_id(task_id)
-
-        TaskStatusManager.set_pending(task)
-        await self.repository.update_status(task)
-
-        await self._send_task_to_queue(task)
 
     async def _send_task_to_queue(self, task: Task) -> None:
         msg = {"task_id": str(task.id)}

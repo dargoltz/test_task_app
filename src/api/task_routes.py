@@ -19,19 +19,6 @@ async def create_task(
     return await service.create_task(request)
 
 
-@task_router.post("/{task_id:uuid}/run")
-async def run_task(
-    task_id: uuid.UUID,
-    service: TaskService = Depends(get_task_service),
-):
-    await service.run_task(task_id)
-
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content={"message": f"Task {task_id} has started"}
-    )
-
-
 @task_router.get("/", response_model=PageResponse[TaskResponse])
 async def get_tasks(
     page_params: PaginationQueryParameters = Depends(),
