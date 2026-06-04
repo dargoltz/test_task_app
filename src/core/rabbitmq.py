@@ -1,8 +1,8 @@
 import json
 from dataclasses import dataclass
 
-import structlog
 import aio_pika
+import structlog
 
 from src.core import app_settings
 from src.domain.value_objects import TaskPriority
@@ -19,7 +19,7 @@ class RabbitMQBase:
 
     async def startup(self):
         self.connection = await aio_pika.connect_robust(app_settings.RABBITMQ_URL)
-        logger.info(f"RabbitMQ connection established successfully")
+        logger.info("RabbitMQ connection established successfully")
 
         self.channel = await self.connection.channel()
         logger.info(f"RabbitMQ channel {self.channel} established successfully")
@@ -37,14 +37,14 @@ class RabbitMQBase:
     async def close(self):
         if self.connection:
             await self.connection.close()
-            logger.info(f"RabbitMQ connection closed successfully")
+            logger.info("RabbitMQ connection closed successfully")
 
 
 @dataclass(slots=True, eq=False)
 class RabbitMQConsumer(RabbitMQBase):
     async def start_consuming(self, handler):
         await self.queue.consume(handler)
-        logger.info(f"Worker started. Waiting for messages...")
+        logger.info("Worker started. Waiting for messages...")
 
 
 @dataclass(slots=True, eq=False)
@@ -65,7 +65,7 @@ class RabbitMQProducer(RabbitMQBase):
 
 
 PRIORITY_MAP = {
-    TaskPriority.LOW:    1,
+    TaskPriority.LOW: 1,
     TaskPriority.MEDIUM: 5,
-    TaskPriority.HIGH:   9,
+    TaskPriority.HIGH: 9,
 }

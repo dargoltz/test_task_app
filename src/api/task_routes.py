@@ -1,11 +1,15 @@
 import uuid
 
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
 from src.api.dependencies import get_task_service
-from src.schemas.request import TaskRequest, TaskFilterQueryParameters, PaginationQueryParameters
-from src.schemas.response import TaskResponse, PageResponse
+from src.schemas.request import (
+    PaginationQueryParameters,
+    TaskFilterQueryParameters,
+    TaskRequest,
+)
+from src.schemas.response import PageResponse, TaskResponse
 from src.service import TaskService
 
 task_router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -43,10 +47,7 @@ async def get_task_status_by_id(
 ):
     task_status = await service.get_task_status(task_id)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content={"status": task_status}
-    )
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"status": task_status})
 
 
 @task_router.delete("/{task_id:uuid}")
@@ -57,6 +58,5 @@ async def cancel_task_by_id(
     await service.cancel_task(task_id)
 
     return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content={"message": f"Task {task_id} cancelled"}
+        status_code=status.HTTP_200_OK, content={"message": f"Task {task_id} cancelled"}
     )

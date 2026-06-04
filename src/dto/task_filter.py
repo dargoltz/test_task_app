@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.domain.value_objects import TaskStatus, TaskPriority
+from src.domain.value_objects import TaskPriority, TaskStatus
 
 
 @dataclass(frozen=True, slots=True)

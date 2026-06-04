@@ -1,8 +1,8 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import APIRouter, FastAPI
 
 from src.api.exception_handlers import not_found_handler, task_status_error_handler
-from src.api.task_routes import task_router
 from src.api.lifespan import lifespan
+from src.api.task_routes import task_router
 from src.domain.exceptions import EntityNotFoundError, TaskStatusError
 
 app = FastAPI(lifespan=lifespan)

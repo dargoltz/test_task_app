@@ -1,2 +1,4 @@
 from .config import app_settings
-from .rabbitmq import RabbitMQProducer, RabbitMQConsumer
+from .rabbitmq import RabbitMQConsumer, RabbitMQProducer
+
+__all__ = ["app_settings", "RabbitMQConsumer", "RabbitMQProducer"]

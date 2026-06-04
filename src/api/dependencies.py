@@ -12,7 +12,9 @@ async def get_db():
         yield session
 
 
-async def get_task_repository(session: AsyncSession = Depends(get_db)) -> TaskRepository:
+async def get_task_repository(
+    session: AsyncSession = Depends(get_db),
+) -> TaskRepository:
     return TaskRepository(session=session)
 
 

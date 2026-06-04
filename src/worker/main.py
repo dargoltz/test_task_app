@@ -2,13 +2,14 @@ import asyncio
 import json
 import uuid
 
-import structlog
 import aio_pika
+import structlog
 
 from src.core import RabbitMQConsumer
 from src.worker.task_processing import process_task
 
 logger = structlog.get_logger()
+
 
 async def handler(message: aio_pika.IncomingMessage):
     async with message.process():
@@ -24,9 +25,7 @@ async def run_worker():
     rabbitmq_consumer = RabbitMQConsumer()
     await rabbitmq_consumer.startup()
 
-    task = asyncio.create_task(
-        rabbitmq_consumer.start_consuming(handler)
-    )
+    task = asyncio.create_task(rabbitmq_consumer.start_consuming(handler))
 
     try:
         await task

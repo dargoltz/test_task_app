@@ -9,11 +9,16 @@ from src.domain.models import Task
 from src.domain.value_objects import TaskStatus
 from src.dto import PageParameters, TaskFilterParameters
 from src.persistence.repositories import TaskRepository
-from src.schemas.request import TaskRequest, TaskFilterQueryParameters, PaginationQueryParameters
-from src.schemas.response import TaskResponse, PageResponse
+from src.schemas.request import (
+    PaginationQueryParameters,
+    TaskFilterQueryParameters,
+    TaskRequest,
+)
+from src.schemas.response import PageResponse, TaskResponse
 from src.service.task_status_manager import TaskStatusManager
 
 logger = structlog.get_logger()
+
 
 @dataclass(frozen=True, slots=True, eq=False)
 class TaskService:
@@ -44,7 +49,6 @@ class TaskService:
 
         return self._domain_to_schema(created)
 
-
     async def _send_task_to_queue(self, task: Task) -> None:
         msg = {"task_id": str(task.id)}
 
@@ -63,7 +67,7 @@ class TaskService:
     async def get_tasks(
         self,
         page_params: PaginationQueryParameters,
-        filter_params: TaskFilterQueryParameters
+        filter_params: TaskFilterQueryParameters,
     ) -> PageResponse[TaskResponse]:
         tasks_page = await self.repository.get_list(
             PageParameters(
@@ -73,7 +77,7 @@ class TaskService:
             TaskFilterParameters(
                 status=filter_params.status,
                 priority=filter_params.priority,
-            )
+            ),
         )
 
         return PageResponse(
