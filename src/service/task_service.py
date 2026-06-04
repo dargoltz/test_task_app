@@ -1,76 +1,92 @@
+import datetime
 import uuid
+from dataclasses import dataclass
 
-from src.api.utils import RabbitMQProducerDep
-from src.core import DBSession, TaskExecutionError, TaskCancelError
-from src.dto import TaskResponse, TaskRequest, PaginatedResponse, TaskFilterParameters
-from src.models import TaskStatus, TaskORM
-from src.repository import TaskRepository
+from src.core import RabbitMQProducer
+from src.domain.models import Task
+from src.domain.value_objects import TaskStatus
+from src.dto import PageParameters, TaskFilterParameters
+from src.persistence.repositories import TaskRepository
+from src.schemas.request import TaskRequest, TaskFilterQueryParameters, PaginationQueryParameters
+from src.schemas.response import TaskResponse, PageResponse
+from src.service.task_status_manager import TaskStatusManager
 
 
+@dataclass(frozen=True, slots=True, eq=False)
 class TaskService:
-    def __init__(self, session: DBSession, rabbitmq_producer: RabbitMQProducerDep):
-        self.session = session
-        self.repository = TaskRepository(session)
-        self.rabbitmq_producer = rabbitmq_producer
+    repository: TaskRepository
+    rabbitmq: RabbitMQProducer
 
     @staticmethod
-    def _orm_to_response(task: TaskORM | None) -> TaskResponse:
-        return TaskResponse.model_validate(task)
+    def _domain_to_schema(domain: Task) -> TaskResponse:
+        return TaskResponse.model_validate(domain)
 
     async def create_task(self, task: TaskRequest) -> TaskResponse:
-        """
-        Создает и запускает задачу. Возвращает инфо о созданной задаче
-
-        Args:
-            task: тело запроса
-        """
-        task_orm = TaskORM(
+        domain_task = Task(
             name=task.name,
             description=task.description,
             priority=task.priority,
-            status=TaskStatus.NEW
+            status=TaskStatus.NEW,
+            created_at=datetime.datetime.now(),
         )
-        created = await self.repository.create(task_orm)
-        await self.session.commit()
 
-        await self._send_task_to_queue(created)
+        created = await self.repository.create(domain_task)
 
-        return self._orm_to_response(created)
+        return self._domain_to_schema(created)
 
-    async def get_task_list(self, filter_params: TaskFilterParameters) -> PaginatedResponse[TaskResponse]:
-        """
-        Возвращает пагинированный список задач
+    async def run_task(self, task_id: uuid.UUID) -> None:
+        task = await self.repository.get_by_id(task_id)
 
-        Args:
-            filter_params: параметры фильтрации
-        """
-        task_list = await self.repository.get_list(filter_params)
-        task_total = await self.repository.get_total(filter_params)
+        if task is None:
+            return
 
-        task_responses = [self._orm_to_response(task) for task in task_list]
+        TaskStatusManager.set_pending(task)
+        await self.repository.update_status(task)
 
-        return PaginatedResponse(
-            page=filter_params.page,
-            limit=filter_params.limit,
-            items=task_responses,
-            total=task_total
-        )
+        await self._send_task_to_queue(task)
+
+    async def _send_task_to_queue(self, task: Task) -> None:
+        msg = {"task_id": str(task.id)}
+        await self.rabbitmq.send_message(msg, task.priority)
 
     async def get_task(self, task_id: uuid.UUID) -> TaskResponse:
         task = await self.repository.get_by_id(task_id)
 
-        return self._orm_to_response(task)
+        return self._domain_to_schema(task)
 
-    async def get_task_status(self, task_id: uuid.UUID) -> TaskStatus:
+    async def get_task_status(self, task_id: uuid.UUID) -> str:
         task = await self.repository.get_by_id(task_id)
 
-        return task.status
+        return task.status.value
+
+    async def get_tasks(
+        self,
+        page_params: PaginationQueryParameters,
+        filter_params: TaskFilterQueryParameters
+    ) -> PageResponse[TaskResponse]:
+        tasks_page = await self.repository.get_list(
+            PageParameters(
+                page=page_params.page,
+                limit=page_params.limit,
+            ),
+            TaskFilterParameters(
+                status=filter_params.status,
+                priority=filter_params.priority,
+            )
+        )
+
+        return PageResponse(
+            page=page_params.page,
+            limit=page_params.limit,
+            items=[self._domain_to_schema(t) for t in tasks_page.items],
+            total=tasks_page.total,
+        )
 
     async def cancel_task(self, task_id: uuid.UUID) -> None:
         """
         Отменяет задачу до начала ее выполнения.
 
-        В остальных случаях отмена не происходит по двум причинам:
+        В остальных случаях отмена не происходит по одной из двух причин:
 
         - задача уже завершена (выполнена, отменена)
         - задача уже запущена (в процессе выполнения)
@@ -78,23 +94,7 @@ class TaskService:
         Args:
             task_id: id задачи
         """
-        found = await self.repository.get_by_id(task_id)
+        task = await self.repository.get_by_id(task_id)
 
-        if found.status in (TaskStatus.NEW, TaskStatus.PENDING):
-            await self.repository.update_status_by_id(task_id, TaskStatus.CANCELLED)
-        else:
-            raise TaskCancelError(found.id, found.status)
-
-        await self.session.commit()
-
-    async def _send_task_to_queue(self, task: TaskORM):
-        try:
-            await self.repository.update_status_by_id(task.id, TaskStatus.PENDING)
-            await self.session.commit()
-
-            await self.rabbitmq_producer.send_message({"task_id": str(task.id)}, task.priority)
-        except Exception as exc:
-            await self.repository.update_status_by_id(task.id, TaskStatus.FAILED)
-            await self.session.commit()
-
-            raise TaskExecutionError(task.id) from exc
+        TaskStatusManager.cancel(task)
+        await self.repository.update_status(task)
