@@ -17,7 +17,7 @@ from src.schemas.request import (
 from src.schemas.response import PageResponse, TaskResponse
 from src.service.task_status_manager import TaskStatusManager
 
-logger = structlog.get_logger()
+logger = structlog.get_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True, eq=False)
@@ -40,7 +40,7 @@ class TaskService:
 
         created = await self.repository.create(domain_task)
 
-        logger.info(f"Task {created.id} created. Start task execution...")
+        logger.info(f"Task created. Start task execution...", task_id=created.id)
 
         TaskStatusManager.set_pending(created)
         await self.repository.update_status(created)
@@ -99,7 +99,7 @@ class TaskService:
         Args:
             task_id: id задачи
         """
-        logger.info(f"Cancelling task {task_id}")
+        logger.info(f"Cancelling task...", task_id=task_id)
 
         task = await self.repository.get_by_id(task_id)
 

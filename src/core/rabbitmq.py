@@ -7,7 +7,7 @@ import structlog
 from src.core import app_settings
 from src.domain.value_objects import TaskPriority
 
-logger = structlog.get_logger()
+logger = structlog.get_logger(__name__)
 
 
 @dataclass(slots=True, eq=False)

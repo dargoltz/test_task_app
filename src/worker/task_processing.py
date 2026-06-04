@@ -10,7 +10,7 @@ from src.persistence.db import get_db_session
 from src.persistence.repositories import TaskRepository
 from src.service import TaskStatusManager
 
-logger = structlog.get_logger()
+logger = structlog.get_logger(__name__)
 
 
 async def process_task(task_id: uuid.UUID):
@@ -19,7 +19,7 @@ async def process_task(task_id: uuid.UUID):
 
         try:
             task = await repository.get_by_id(task_id, for_update=True)
-            logger.info(f"Task {task_id} found. Starting processing...")
+            logger.info(f"Task found. Starting processing...", task_id=task_id)
 
             TaskStatusManager.start(task=task)
             await repository.update_status(task)
@@ -29,10 +29,10 @@ async def process_task(task_id: uuid.UUID):
             TaskStatusManager.complete(task=task, result=result)
             await repository.update_status(task)
 
-            logger.info(f"Task {task_id} completed successfully")
+            logger.info(f"Task completed successfully", task_id=task_id)
 
         except EntityNotFoundError:
-            logger.error(f"Task {task_id} not found")
+            logger.error(f"Task not found", task_id=task_id)
             return
 
         except (TaskExecutionError, ValueError) as e:
@@ -42,7 +42,7 @@ async def process_task(task_id: uuid.UUID):
             await repository.update_status(task)
 
         except Exception as e:
-            logger.exception(f"Unexpected error: {e}")
+            logger.exception(f"Unexpected error: {e}", task_id=task_id)
             TaskStatusManager.fail(task=task, error=str(e))
 
             await repository.update_status(task)
