@@ -38,6 +38,12 @@ class TaskService:
         return self._domain_to_schema(created)
 
     async def run_task(self, task_id: uuid.UUID) -> None:
+        """
+        Запускает задачу.
+
+        Args:
+            task_id: id задачи
+        """
         logger.info(f"Running task {task_id}")
 
         task = await self.repository.get_by_id(task_id)
@@ -49,6 +55,7 @@ class TaskService:
 
     async def _send_task_to_queue(self, task: Task) -> None:
         msg = {"task_id": str(task.id)}
+
         await self.rabbitmq.send_message(msg, task.priority)
 
     async def get_task(self, task_id: uuid.UUID) -> TaskResponse:

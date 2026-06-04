@@ -10,6 +10,9 @@ logger = structlog.get_logger()
 
 
 class TaskStatusManager:
+    """
+        Менеджер для управления статусами задач
+    """
     def __new__(cls):
         raise TypeError("TaskStatusManager cannot be instantiated")
 
