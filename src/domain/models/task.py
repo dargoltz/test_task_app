@@ -1,6 +1,6 @@
 import uuid
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
 
 from src.domain.value_objects import TaskPriority, TaskStatus
 

@@ -1,13 +1,13 @@
-from dataclasses import dataclass
 import uuid
+from dataclasses import dataclass
 
-from sqlalchemy import select, func, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.exceptions import EntityNotFoundError
 from src.domain.models import Task
-from src.domain.value_objects import TaskStatus, TaskPriority
-from src.dto import TaskFilterParameters, PageParameters, Page
+from src.domain.value_objects import TaskPriority, TaskStatus
+from src.dto import Page, PageParameters, TaskFilterParameters
 from src.persistence.orm_models import TaskORM
 
 
@@ -65,10 +65,7 @@ class TaskRepository:
         return self._orm_to_domain(orm_obj)
 
     async def get_by_id(
-        self,
-        task_id: uuid.UUID,
-        *,
-        for_update: bool = False
+        self, task_id: uuid.UUID, *, for_update: bool = False
     ) -> Task | None:
         stmt = select(TaskORM).where(TaskORM.id == task_id)
 
@@ -100,9 +97,9 @@ class TaskRepository:
         stmt = self._apply_filters(stmt, filter_params)
 
         stmt = (
-            stmt
-            .limit(page_params.limit)
+            stmt.limit(page_params.limit)
             .offset(page_params.offset)
+            .order_by(TaskORM.created_at)
         )
 
         result = await self.session.execute(stmt)
@@ -120,7 +117,7 @@ class TaskRepository:
             update(TaskORM)
             .where(TaskORM.id == task.id)
             .values(
-                status=task.status,
+                status=task.status.value,
                 started_at=task.started_at,
                 finished_at=task.finished_at,
                 result=task.result,
@@ -128,7 +125,5 @@ class TaskRepository:
             )
         )
 
-        result = await self.session.execute(stmt)
+        await self.session.execute(stmt)
         await self.session.commit()
-
-        print("rows updated:", result.rowcount)

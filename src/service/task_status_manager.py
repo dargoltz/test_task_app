@@ -10,13 +10,19 @@ logger = structlog.get_logger()
 
 
 class TaskStatusManager:
+    """
+    Менеджер для управления статусами задач
+    """
+
     def __new__(cls):
         raise TypeError("TaskStatusManager cannot be instantiated")
 
     @staticmethod
     def set_pending(task: Task) -> None:
         if task.status not in (TaskStatus.NEW, TaskStatus.FAILED):
-            raise TaskStatusError(f"Can't set task {task.id} as pending: must be NEW or FAILED")
+            raise TaskStatusError(
+                f"Can't set task {task.id} as pending: must be NEW or FAILED"
+            )
 
         task.status = TaskStatus.PENDING
 

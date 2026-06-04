@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+
 from src.core.rabbitmq import RabbitMQProducer
 
 
