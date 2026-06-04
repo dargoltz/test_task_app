@@ -1,8 +1,12 @@
 from datetime import datetime
 
+import structlog
+
 from src.domain.exceptions import TaskStatusError
 from src.domain.models import Task
 from src.domain.value_objects import TaskStatus
+
+logger = structlog.get_logger()
 
 
 class TaskStatusManager:
@@ -16,6 +20,8 @@ class TaskStatusManager:
 
         task.status = TaskStatus.PENDING
 
+        logger.info(f"Task {task.id} set to PENDING")
+
     @staticmethod
     def start(task: Task) -> None:
         if task.status != TaskStatus.PENDING:
@@ -23,6 +29,8 @@ class TaskStatusManager:
 
         task.started_at = datetime.now()
         task.status = TaskStatus.IN_PROGRESS
+
+        logger.info(f"Task {task.id} set to IN_PROGRESS")
 
     @staticmethod
     def complete(task: Task, result: str) -> None:
@@ -33,11 +41,15 @@ class TaskStatusManager:
         task.finished_at = datetime.now()
         task.status = TaskStatus.COMPLETED
 
+        logger.info(f"Task {task.id} set to COMPLETED")
+
     @staticmethod
     def fail(task: Task, error: str) -> None:
         task.error = error
         task.finished_at = datetime.now()
         task.status = TaskStatus.FAILED
+
+        logger.info(f"Task {task.id} set to FAILED")
 
     @staticmethod
     def cancel(task: Task) -> None:
@@ -45,3 +57,5 @@ class TaskStatusManager:
             raise TaskStatusError(f"Can't cancel {task.id}: must be NEW or PENDING")
 
         task.status = TaskStatus.CANCELLED
+
+        logger.info(f"Task {task.id} set to CANCELLED")

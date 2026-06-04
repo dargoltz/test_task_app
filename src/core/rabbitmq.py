@@ -1,10 +1,13 @@
 import json
 from dataclasses import dataclass
 
+import structlog
 import aio_pika
 
 from src.core import app_settings
 from src.domain.value_objects import TaskPriority
+
+logger = structlog.get_logger()
 
 
 @dataclass(slots=True, eq=False)
@@ -16,8 +19,13 @@ class RabbitMQBase:
 
     async def startup(self):
         self.connection = await aio_pika.connect_robust(app_settings.RABBITMQ_URL)
+        logger.info(f"RabbitMQ connection established successfully")
+
         self.channel = await self.connection.channel()
+        logger.info(f"RabbitMQ channel {self.channel} established successfully")
+
         self.queue = await self._declare_queue()
+        logger.info(f"RabbitMQ queue ({self.queue_name}) declared successfully")
 
     async def _declare_queue(self) -> aio_pika.abc.AbstractQueue:
         return await self.channel.declare_queue(
@@ -29,12 +37,14 @@ class RabbitMQBase:
     async def close(self):
         if self.connection:
             await self.connection.close()
+            logger.info(f"RabbitMQ connection closed successfully")
 
 
 @dataclass(slots=True, eq=False)
 class RabbitMQConsumer(RabbitMQBase):
     async def start_consuming(self, handler):
         await self.queue.consume(handler)
+        logger.info(f"Worker started. Waiting for messages...")
 
 
 @dataclass(slots=True, eq=False)
@@ -45,6 +55,8 @@ class RabbitMQProducer(RabbitMQBase):
             priority=PRIORITY_MAP[priority],
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
         )
+
+        logger.info(f"Sending message: {message}")
 
         await self.channel.default_exchange.publish(
             msg,

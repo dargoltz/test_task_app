@@ -2,12 +2,15 @@ import asyncio
 import random
 import uuid
 
+import structlog
+
 from src.domain.exceptions import EntityNotFoundError, TaskExecutionError
 from src.domain.models import Task
 from src.persistence.db import get_db_session
 from src.persistence.repositories import TaskRepository
 from src.service import TaskStatusManager
-from src.worker.logger import logger
+
+logger = structlog.get_logger()
 
 
 async def process_task(task_id: uuid.UUID):

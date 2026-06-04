@@ -2,12 +2,13 @@ import asyncio
 import json
 import uuid
 
+import structlog
 import aio_pika
 
 from src.core import RabbitMQConsumer
-from src.worker.logger import logger
 from src.worker.task_processing import process_task
 
+logger = structlog.get_logger()
 
 async def handler(message: aio_pika.IncomingMessage):
     async with message.process():
@@ -23,8 +24,6 @@ async def run_worker():
     rabbitmq_consumer = RabbitMQConsumer()
     await rabbitmq_consumer.startup()
 
-    logger.info("Worker started")
-
     task = asyncio.create_task(
         rabbitmq_consumer.start_consuming(handler)
     )
@@ -33,7 +32,6 @@ async def run_worker():
         await task
         await asyncio.Event().wait()
     except asyncio.CancelledError:
-        logger.info("Worker stopping...")
         task.cancel()
         raise
 

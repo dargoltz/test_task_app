@@ -2,6 +2,8 @@ import datetime
 import uuid
 from dataclasses import dataclass
 
+import structlog
+
 from src.core import RabbitMQProducer
 from src.domain.models import Task
 from src.domain.value_objects import TaskStatus
@@ -11,6 +13,7 @@ from src.schemas.request import TaskRequest, TaskFilterQueryParameters, Paginati
 from src.schemas.response import TaskResponse, PageResponse
 from src.service.task_status_manager import TaskStatusManager
 
+logger = structlog.get_logger()
 
 @dataclass(frozen=True, slots=True, eq=False)
 class TaskService:
@@ -35,6 +38,8 @@ class TaskService:
         return self._domain_to_schema(created)
 
     async def run_task(self, task_id: uuid.UUID) -> None:
+        logger.info(f"Running task {task_id}")
+
         task = await self.repository.get_by_id(task_id)
 
         TaskStatusManager.set_pending(task)
@@ -91,6 +96,8 @@ class TaskService:
         Args:
             task_id: id задачи
         """
+        logger.info(f"Cancelling task {task_id}")
+
         task = await self.repository.get_by_id(task_id)
 
         TaskStatusManager.cancel(task)
