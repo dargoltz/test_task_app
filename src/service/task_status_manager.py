@@ -6,7 +6,7 @@ from src.domain.exceptions import TaskStatusError
 from src.domain.models import Task
 from src.domain.value_objects import TaskStatus
 
-logger = structlog.get_logger()
+logger = structlog.get_logger(__name__)
 
 
 class TaskStatusManager:
@@ -26,7 +26,7 @@ class TaskStatusManager:
 
         task.status = TaskStatus.PENDING
 
-        logger.info(f"Task {task.id} set to PENDING")
+        logger.info(f"Task set to PENDING", task_id=task.id)
 
     @staticmethod
     def start(task: Task) -> None:
@@ -36,7 +36,7 @@ class TaskStatusManager:
         task.started_at = datetime.now()
         task.status = TaskStatus.IN_PROGRESS
 
-        logger.info(f"Task {task.id} set to IN_PROGRESS")
+        logger.info(f"Task set to IN_PROGRESS", task_id=task.id)
 
     @staticmethod
     def complete(task: Task, result: str) -> None:
@@ -47,7 +47,7 @@ class TaskStatusManager:
         task.finished_at = datetime.now()
         task.status = TaskStatus.COMPLETED
 
-        logger.info(f"Task {task.id} set to COMPLETED")
+        logger.info(f"Task set to COMPLETED", task_id=task.id)
 
     @staticmethod
     def fail(task: Task, error: str) -> None:
@@ -55,7 +55,7 @@ class TaskStatusManager:
         task.finished_at = datetime.now()
         task.status = TaskStatus.FAILED
 
-        logger.info(f"Task {task.id} set to FAILED")
+        logger.info(f"Task set to FAILED", task_id=task.id)
 
     @staticmethod
     def cancel(task: Task) -> None:
@@ -64,4 +64,4 @@ class TaskStatusManager:
 
         task.status = TaskStatus.CANCELLED
 
-        logger.info(f"Task {task.id} set to CANCELLED")
+        logger.info(f"Task set to CANCELLED", task_id=task.id)

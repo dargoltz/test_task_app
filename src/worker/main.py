@@ -8,14 +8,14 @@ import structlog
 from src.core import RabbitMQConsumer
 from src.worker.task_processing import process_task
 
-logger = structlog.get_logger()
+logger = structlog.get_logger(__name__)
 
 
 async def handler(message: aio_pika.IncomingMessage):
     async with message.process():
         msg = json.loads(message.body.decode())
 
-        logger.info(f"Received message: {msg}")
+        logger.info(f"Received message", message=msg)
         task_id = uuid.UUID(msg["task_id"])
 
         await process_task(task_id)

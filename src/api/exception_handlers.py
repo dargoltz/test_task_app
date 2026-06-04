@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 
 from src.domain.exceptions import EntityNotFoundError, TaskStatusError
 
-logger = structlog.get_logger()
+logger = structlog.get_logger(__name__)
 
 
 async def not_found_handler(
