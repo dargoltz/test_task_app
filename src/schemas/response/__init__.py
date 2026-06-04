@@ -1,2 +1,2 @@
-from .pagination import PaginatedResponse
+from .page import PageResponse
 from .task import TaskResponse

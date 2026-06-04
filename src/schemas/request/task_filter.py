@@ -1,7 +1,8 @@
+from pydantic import BaseModel
+
 from src.domain.value_objects import TaskStatus, TaskPriority
-from src.schemas.request.pagination import PaginationParameters
 
 
-class TaskFilterParameters(PaginationParameters):
+class TaskFilterQueryParameters(BaseModel):
     status: TaskStatus | None = None
     priority: TaskPriority | None = None
