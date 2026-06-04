@@ -103,6 +103,7 @@ class TaskRepository:
             stmt
             .limit(page_params.limit)
             .offset(page_params.offset)
+            .order_by(TaskORM.created_at)
         )
 
         result = await self.session.execute(stmt)
@@ -120,7 +121,7 @@ class TaskRepository:
             update(TaskORM)
             .where(TaskORM.id == task.id)
             .values(
-                status=task.status,
+                status=task.status.value,
                 started_at=task.started_at,
                 finished_at=task.finished_at,
                 result=task.result,
@@ -128,7 +129,5 @@ class TaskRepository:
             )
         )
 
-        result = await self.session.execute(stmt)
+        await self.session.execute(stmt)
         await self.session.commit()
-
-        print("rows updated:", result.rowcount)
