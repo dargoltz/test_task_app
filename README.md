@@ -93,7 +93,9 @@ RabbitMQ Management - `http://localhost:15672`
 
 `uv run alembic upgrade head` - применить миграции к БД
 
-`uv run uvicorm src.api.app:app --reload` - запустить API вне Docker
+`uv run uvicorn src.api.app:app --reload` - запустить API вне Docker
+
+`uv run -m src.worker.main` - запустить worker вне Docker
 
 `pytest` - запустить тесты
 
