@@ -85,15 +85,15 @@ RabbitMQ Management - `http://localhost:15672`
 
 Конфигурации должны соответствовать .env файлу
 
-`uv run alembic upgrade head` - применить миграции к БД
+`alembic upgrade head` - применить миграции к БД
 
-`uv run uvicorn src.api.app:app --reload` - запустить API вне Docker
+`uvicorn src.api.app:app --reload` - запустить API вне Docker
 
-`uv run -m src.worker.main` - запустить worker вне Docker
+`python -m src.worker.main` - запустить worker вне Docker
 
 `pytest` - запустить тесты
 
-## Допущения и упрощения
+## Допущения и упрощенияw
 
 В рамках тестового задания были приняты следующие упрощения:
 
@@ -107,16 +107,3 @@ RabbitMQ Management - `http://localhost:15672`
 8. Расписание задач и отложенный запуск не поддерживаются.
 9. Решение ориентировано на демонстрацию архитектуры асинхронной обработки задач, а не на полноценную production-ready
    систему.
-
-## Возможные улучшения
-
-* Retry Policy
-* Dead Letter Queue
-* Prometheus Metrics
-* OpenTelemetry Tracing
-* Health Check Endpoint
-* Structured Logging
-* Task Scheduling
-* Distributed Locks
-* Circuit Breaker для RabbitMQ
-* CI/CD Pipeline
